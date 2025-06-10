@@ -87,6 +87,7 @@ jobs:
 
       - name: Slack Notification 5
         uses: rtCamp/action-slack-notify@v2
+        if: always()
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_CHANNEL: deploy-notifications
