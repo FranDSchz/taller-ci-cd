@@ -70,7 +70,7 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL  }}
         if: always()
 
-      - name: Notificar a Slack
+      - name: Notificar a Slack 4
         uses: 8398a7/action-slack@v3
         if: always()  # Se ejecuta siempre (éxito o error)
         with:
@@ -84,3 +84,25 @@ jobs:
           icon_emoji: ':rocket:'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Slack Notification 5
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: deploy-notifications
+          SLACK_USERNAME: 🚀 GitHub Actions Bot
+          SLACK_ICON_EMOJI: ":rocket:"
+          SLACK_COLOR: ${{ job.status }}  # verde si pasó, rojo si falló
+          SLACK_TITLE: "🔔 Despliegue Automático"
+          SLACK_MESSAGE_ON_SUCCESS: |
+            ✅ *Despliegue Exitoso*
+            • Repo: `${{ github.repository }}`
+            • Branch: `${{ github.ref_name }}`
+            • Autor: `${{ github.actor }}`
+            • Commit: <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>
+          SLACK_MESSAGE_ON_FAILURE: |
+            ❌ *Despliegue Fallido*
+            • Repo: `${{ github.repository }}`
+            • Branch: `${{ github.ref_name }}`
+            • Autor: `${{ github.actor }}`
+            • Revisa los logs: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Ver ejecución>
