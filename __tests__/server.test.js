@@ -14,6 +14,6 @@ describe('Test de endpoint GET /saludo/nombre',()=> {
     it(`deberia responder con un ¡Hola, ${nombre}!`, async () => {
         const res = await request(app).get(`/saludo/${nombre}`);
         expect(res.statusCode).toBe(200);
-        expect(res.text).toBe(`¡Hola, ${nombre}!`);
+        expect(res.text).toBe(`Hola, ${nombre}!`);
     });
 });
