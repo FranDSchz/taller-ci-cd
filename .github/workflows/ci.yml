@@ -123,6 +123,6 @@ jobs:
       - name: Run tests with coverage
         run: npm test -- --coverage
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v3
+        uses: SonarSource/sonarcloud-github-action@v5.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
