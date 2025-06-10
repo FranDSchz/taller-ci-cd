@@ -1,31 +1,28 @@
-name: CI/CD - Node.js App
+name: CI - Node.js App
 
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  # El primer job sigue siendo el mismo, instala y cachea.
   build:
-    name: 🔧 Build
+    name: 🛠️ Build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Clonar el repositorio
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Usar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm' # La clave está aquí: activa la caché.
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Instalar dependencias
+        run: npm install
 
-      # Ya no subimos 'node_modules' como artefacto.
-      # Podrías subir aquí artefactos de build si tu app los generara (ej: una carpeta 'dist').
-
-      - name: Notify Slack - Build
+      - name: Notificar a Slack - Build
         uses: 8398a7/action-slack@v3
         if: always()
         with:
@@ -34,45 +31,7 @@ jobs:
           job_name: 'build'
           text: 'Build `${{ github.repository }}` en `${{ github.ref }}`'
           fields: repo,ref,commit,took
-          mention: 'here'
-          if_mention: failure
           icon_emoji: ':hammer_and_wrench:'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-  # Los jobs de lint y test ahora vuelven a tener sus propios pasos de instalación,
-  # pero serán muy rápidos gracias a la caché.
-  lint:
-    name: 🧼 Lint
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm' # Usamos la misma caché.
-
-      # Este paso será casi instantáneo si la caché existe.
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run ESLint
-        run: npx eslint .
-
-      - name: Notify Slack - Lint
-        uses: 8398a7/action-slack@v3
-        if: always()
-        with:
-          status: ${{ job.status }}
-          job_name: 'lint'
-          author_name: '🧼 Lint'
-          text: 'Lint result for `${{ github.repository }}`'
-          fields: repo,ref,commit,took
-          icon_emoji: ':broom:'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
@@ -81,23 +40,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm' # Y usamos la caché aquí también.
+      - run: npm install
+      - run: npm test
 
-      # Este paso también será muy rápido.
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm test
-
-      - name: Notify Slack - Test
+      - name: Notificar a Slack - Test
         uses: 8398a7/action-slack@v3
         if: always()
         with:
@@ -106,6 +56,31 @@ jobs:
           job_name: 'test'
           text: 'Resultado de tests para `${{ github.repository }}`'
           fields: repo,ref,commit,took
-          icon_emoji: ':test_tube:'
+          icon_emoji: ':microscope:'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  lint:
+    name: 🧹 Lint
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run lint
+
+      - name: Notificar a Slack - Lint
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          author_name: '🧹 Lint'
+          job_name: 'lint'
+          text: 'Lint result for `${{ github.repository }}`'
+          fields: repo,ref,commit,took
+          icon_emoji: ':broom:'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
