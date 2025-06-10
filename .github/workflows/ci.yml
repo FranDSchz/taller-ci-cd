@@ -5,8 +5,9 @@ on:
     branches: [ main ]
 
 jobs:
+  # El primer job sigue siendo el mismo, instala y cachea.
   build:
-    name: Build
+    name: 🔧 Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -16,10 +17,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'npm' # La clave está aquí: activa la caché.
 
       - name: Install dependencies
         run: npm ci
+
+      # Ya no subimos 'node_modules' como artefacto.
+      # Podrías subir aquí artefactos de build si tu app los generara (ej: una carpeta 'dist').
 
       - name: Notify Slack - Build
         uses: 8398a7/action-slack@v3
@@ -27,14 +31,16 @@ jobs:
         with:
           status: ${{ job.status }}
           author_name: '🔧 Build'
-          text: '🔨 Build finalizado'
-          fields: repo,ref,commit,took
+          job_name: 🔧 Build
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took,pullRequest
           mention: 'here'
           if_mention: failure
           icon_emoji: ':hammer_and_wrench:'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
+  # Los jobs de lint y test ahora vuelven a tener sus propios pasos de instalación,
+  # pero serán muy rápidos gracias a la caché.
   lint:
     name: 🧼 Lint
     runs-on: ubuntu-latest
@@ -46,8 +52,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'npm' # Usamos la misma caché.
 
+      # Este paso será casi instantáneo si la caché existe.
       - name: Install dependencies
         run: npm ci
 
@@ -60,8 +67,8 @@ jobs:
         with:
           status: ${{ job.status }}
           author_name: '🧼 Lint'
-          text: '🧹 Lint completado'
-          fields: repo,ref,commit,took
+          job_name: 🧼 Lint
+          fields: commit,took
           icon_emoji: ':broom:'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -77,8 +84,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'npm' # Y usamos la caché aquí también.
 
+      # Este paso también será muy rápido.
       - name: Install dependencies
         run: npm ci
 
@@ -91,8 +99,8 @@ jobs:
         with:
           status: ${{ job.status }}
           author_name: '🧪 Test'
-          text: '🧫 Tests ejecutados'
-          fields: repo,ref,commit,took
+          job_name: 🧪 Test
+          fields: commit,took
           icon_emoji: ':test_tube:'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
