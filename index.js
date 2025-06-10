@@ -10,6 +10,7 @@ app.get('/saludo/:nombre', (req, res) => {
   res.send(`¡Hola, ${nombre}!`);
 });
 
+/* istanbul ignore next */
 if (require.main === module) {
   // Solo se ejecuta si lo ejecutás directamente con node index.js
   const PORT = process.env.PORT || 3000;
