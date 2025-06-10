@@ -3,8 +3,6 @@ name: CI/CD - Node.js App
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   build:
@@ -28,6 +26,7 @@ jobs:
         with:
           status: ${{ job.status }}
           author_name: '🔧 Build'
+          job_name: 'build'
           text: 'Build `${{ github.repository }}` en `${{ github.ref }}`'
           fields: repo,ref,commit,took
           mention: 'here'
@@ -54,6 +53,7 @@ jobs:
         if: always()
         with:
           status: ${{ job.status }}
+          job_name: 'lint'
           author_name: '🧼 Lint'
           text: 'Lint result for `${{ github.repository }}`'
           fields: repo,ref,commit,took
@@ -69,6 +69,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
+          job_name: 'test'
           node-version: '20'
       - run: npm ci
       - run: npm test
