@@ -32,7 +32,7 @@ jobs:
           status: ${{ job.status }}
           author_name: '🔧 Build'
           job_name: 🔧 Build
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took,pullRequest
+          fields: repo,message,commit,author,eventName,ref,took
           mention: 'here'
           if_mention: failure
           icon_emoji: ':hammer_and_wrench:'
