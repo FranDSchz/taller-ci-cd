@@ -1,99 +1,111 @@
-name: CI - Node.js App
+name: CI/CD - Node.js App
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
+  # El primer job sigue siendo el mismo, instala y cachea.
   build:
-    name: 🛠️ Build
+    name: 🔧 Build
     runs-on: ubuntu-latest
     steps:
-      - name: 📦 Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🔧 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm' # La clave está aquí: activa la caché.
 
-      - name: 📥 Install dependencies
-        run: npm install
+      - name: Install dependencies
+        run: npm ci
 
-      - name: ✅ Slack success
-        if: success()
-        uses: rtCamp/action-slack-notify@v2
+      # Ya no subimos 'node_modules' como artefacto.
+      # Podrías subir aquí artefactos de build si tu app los generara (ej: una carpeta 'dist').
+
+      - name: Notify Slack - Build
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          author_name: '🔧 Build'
+          job_name: 'build'
+          text: 'Build `${{ github.repository }}` en `${{ github.ref }}`'
+          fields: repo,ref,commit,took
+          mention: 'here'
+          if_mention: failure
+          icon_emoji: ':hammer_and_wrench:'
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_COLOR: good
-          SLACK_TITLE: ":white_check_mark: Build exitoso"
-          SLACK_MESSAGE: "Build del commit `${{ github.sha }}` completado correctamente en `${{ github.repository }}`."
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-      - name: ❌ Slack failure
-        if: failure()
-        uses: rtCamp/action-slack-notify@v2
+  # Los jobs de lint y test ahora vuelven a tener sus propios pasos de instalación,
+  # pero serán muy rápidos gracias a la caché.
+  lint:
+    name: 🧼 Lint
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm' # Usamos la misma caché.
+
+      # Este paso será casi instantáneo si la caché existe.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npx eslint .
+
+      - name: Notify Slack - Lint
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          job_name: 'lint'
+          author_name: '🧼 Lint'
+          text: 'Lint result for `${{ github.repository }}`'
+          fields: repo,ref,commit,took
+          icon_emoji: ':broom:'
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_COLOR: danger
-          SLACK_TITLE: ":x: Falló el build"
-          SLACK_MESSAGE: "El job de build falló en `${{ github.repository }}` para `${{ github.ref }}`."
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   test:
     name: 🧪 Test
     runs-on: ubuntu-latest
+    needs: build
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm install
-      - run: npm test
+          cache: 'npm' # Y usamos la caché aquí también.
 
-      - name: ✅ Slack success
-        if: success()
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_COLOR: good
-          SLACK_TITLE: ":white_check_mark: Tests exitosos"
-          SLACK_MESSAGE: "Todos los tests pasaron en `${{ github.repository }}` para `${{ github.ref }}`."
+      # Este paso también será muy rápido.
+      - name: Install dependencies
+        run: npm ci
 
-      - name: ❌ Slack failure
-        if: failure()
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_COLOR: danger
-          SLACK_TITLE: ":x: Fallaron los tests"
-          SLACK_MESSAGE: "Algunos tests fallaron en `${{ github.repository }}` para `${{ github.ref }}`."
+      - name: Run tests
+        run: npm test
 
-  lint:
-    name: 🧹 Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Notify Slack - Test
+        uses: 8398a7/action-slack@v3
+        if: always()
         with:
-          node-version: '20'
-      - run: npm install
-      - run: npm run lint
-
-      - name: ✅ Slack success
-        if: success()
-        uses: rtCamp/action-slack-notify@v2
+          status: ${{ job.status }}
+          author_name: '🧪 Test'
+          job_name: 'test'
+          text: 'Resultado de tests para `${{ github.repository }}`'
+          fields: repo,ref,commit,took
+          icon_emoji: ':test_tube:'
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_COLOR: good
-          SLACK_TITLE: ":white_check_mark: Lint exitoso"
-          SLACK_MESSAGE: "Linting completado sin errores en `${{ github.repository }}`."
-
-      - name: ❌ Slack failure
-        if: failure()
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_COLOR: danger
-          SLACK_TITLE: ":x: Falló el Lint"
-          SLACK_MESSAGE: "Se encontraron errores de lint en `${{ github.repository }}` para `${{ github.ref }}`."
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
