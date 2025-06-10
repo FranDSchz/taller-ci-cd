@@ -10,7 +10,7 @@ describe('Test de endpoint GET /', () => {
 });
 
 describe('Test de endpoint GET /saludo/nombre',()=> {
-    const nombre = 'Franco'
+    const nombre = 'Franco';
     it(`deberia responder con un ¡Hola, ${nombre}!`, async () => {
         const res = await request(app).get(`/saludo/${nombre}`);
         expect(res.statusCode).toBe(200);

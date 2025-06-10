@@ -5,8 +5,9 @@ on:
     branches: [ main ]
 
 jobs:
+  # El primer job sigue siendo el mismo, instala y cachea.
   build:
-    name: 🔧 Build & Cache
+    name: 🔧 Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -16,21 +17,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          # Agregamos el cacheo de npm. Esto acelerará 'npm ci'.
-          cache: 'npm'
+          cache: 'npm' # La clave está aquí: activa la caché.
 
       - name: Install dependencies
         run: npm ci
 
-      # AHORA: Guardamos la carpeta node_modules como un artefacto para los siguientes jobs.
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: node-modules-and-code
-          path: |
-            node_modules/
-            # También incluimos el resto del código para no tener que hacer checkout de nuevo.
-            .
+      # Ya no subimos 'node_modules' como artefacto.
+      # Podrías subir aquí artefactos de build si tu app los generara (ej: una carpeta 'dist').
 
       - name: Notify Slack - Build
         uses: 8398a7/action-slack@v3
@@ -46,23 +39,26 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
+  # Los jobs de lint y test ahora vuelven a tener sus propios pasos de instalación,
+  # pero serán muy rápidos gracias a la caché.
   lint:
     name: 🧼 Lint
     runs-on: ubuntu-latest
-    needs: build # Depende de que 'build' termine correctamente.
+    needs: build
     steps:
-      # YA NO HACEMOS CHECKOUT NI NPM CI. Descargamos el artefacto.
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: node-modules-and-code
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # setup-node sigue siendo necesario para tener el ejecutable de Node.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
+          cache: 'npm' # Usamos la misma caché.
+
+      # Este paso será casi instantáneo si la caché existe.
+      - name: Install dependencies
+        run: npm ci
+
       - name: Run ESLint
         run: npx eslint .
 
@@ -82,20 +78,21 @@ jobs:
   test:
     name: 🧪 Test
     runs-on: ubuntu-latest
-    needs: build # Depende de que 'build' termine correctamente.
+    needs: build
     steps:
-      # Igual que en el job de lint, solo descargamos el artefacto.
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: node-modules-and-code
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          # El parámetro 'job_name' no es válido aquí, lo he eliminado.
           node-version: '20'
-          
+          cache: 'npm' # Y usamos la caché aquí también.
+
+      # Este paso también será muy rápido.
+      - name: Install dependencies
+        run: npm ci
+
       - name: Run tests
         run: npm test
 
