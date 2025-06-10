@@ -7,7 +7,7 @@ on:
 jobs:
   # El primer job sigue siendo el mismo, instala y cachea.
   build:
-    name: 🔧 Build
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,9 +31,9 @@ jobs:
         with:
           status: ${{ job.status }}
           author_name: '🔧 Build'
-          job_name: 'build'
+          job_name: Build
           text: 'Build `${{ github.repository }}` en `${{ github.ref }}`'
-          fields: repo,ref,commit
+          fields: repo,ref,commit,took
           mention: 'here'
           if_mention: failure
           icon_emoji: ':hammer_and_wrench:'
@@ -67,10 +67,10 @@ jobs:
         if: always()
         with:
           status: ${{ job.status }}
-          job_name: 'lint'
           author_name: '🧼 Lint'
+          job_name: 🧼 Lint
           text: 'Lint result for `${{ github.repository }}`'
-          fields: repo,ref,commit
+          fields: repo,ref,commit,took
           icon_emoji: ':broom:'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -101,9 +101,9 @@ jobs:
         with:
           status: ${{ job.status }}
           author_name: '🧪 Test'
-          job_name: 'test'
+          job_name: 🧪 Test
           text: 'Resultado de tests para `${{ github.repository }}`'
-          fields: repo,ref,commit
+          fields: repo,ref,commit,took
           icon_emoji: ':test_tube:'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
