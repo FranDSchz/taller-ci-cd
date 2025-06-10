@@ -31,6 +31,7 @@ jobs:
         with:
           status: ${{ job.status }}
           author_name: '🔧 Build'
+          job_name: 'build'
           text: 'Build `${{ github.repository }}` en `${{ github.ref }}`'
           fields: repo,ref,commit,took
           mention: 'here'
@@ -102,6 +103,7 @@ jobs:
         with:
           status: ${{ job.status }}
           author_name: '🧪 Test'
+          job_name: 'test'
           text: 'Resultado de tests para `${{ github.repository }}`'
           fields: repo,ref,commit,took
           icon_emoji: ':test_tube:'
