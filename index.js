@@ -14,7 +14,7 @@ if (require.main === module) {
   // Solo se ejecuta si lo ejecutás directamente con node index.js
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
-    console.log(`Servidor iniciado en http://localhost:${PORT}`);
+    console.log(`Servidor iniciado en: http://localhost:${PORT}`);
   });
 }
 
