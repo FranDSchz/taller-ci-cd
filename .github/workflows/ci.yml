@@ -124,8 +124,5 @@ jobs:
         run: npm test -- --coverage
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v3
-        with:
-          organization: frandschz
-          projectKey: taller-ci-cd
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
