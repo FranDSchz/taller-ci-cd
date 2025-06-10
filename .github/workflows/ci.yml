@@ -69,3 +69,18 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL  }}
         if: always()
+
+      - name: Notificar a Slack
+        uses: 8398a7/action-slack@v3
+        if: always()  # Se ejecuta siempre (éxito o error)
+        with:
+          status: ${{ job.status }}   # success / failure / cancelled
+          author_name: '🚀 CI/CD - Test Suite'
+          text: '🔔 Resultado del workflow de CI para `${{ github.repository }}`'
+          fields: repo,message,commit,author,ref,workflow,job,took
+          mention: 'here'
+          if_mention: 'failure'
+          username: 'CI Bot 🤖'
+          icon_emoji: ':rocket:'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
