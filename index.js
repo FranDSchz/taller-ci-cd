@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 
 app.get('/', (req, res) => {
-  res.send('¡Hola, mundo!');
+  res.send('¡Hola, mundo de CI/CD!');
 });
 
 app.get('/saludo/:nombre', (req, res) => {
@@ -14,7 +14,7 @@ if (require.main === module) {
   // Solo se ejecuta si lo ejecutás directamente con node index.js
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
-    console.log(`Servidor iniciado en: http://localhost:${PORT}`);
+    console.log(`Servidor iniciado en http://localhost:${PORT}`);
   });
 }
 
