@@ -165,4 +165,4 @@ jobs:
           fields: took
           icon_emoji: ':rocket:'
         env:
-          SLACK_WEBHOOK_URL_STAGING: ${{ secrets.SLACK_WEBHOOK_URL_STAGING }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_STAGING }
