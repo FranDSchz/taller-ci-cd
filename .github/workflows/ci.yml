@@ -136,8 +136,4 @@ jobs:
           fields: commit,took
           icon_emoji: ':rocket:'
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      - name: Wake up Render app
-        run: |
-          sleep 10  # espera unos segundos después del deploy
-          curl https://ci-cd-server.onrender.com
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }
