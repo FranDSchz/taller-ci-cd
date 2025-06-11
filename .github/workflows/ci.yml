@@ -1,8 +1,15 @@
-name: CI/CD - Node.js App
+name: CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - staging
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+      - staging
 
 jobs:
   build:
@@ -20,9 +27,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
       - name: Notify Slack - Build
         uses: 8398a7/action-slack@v3
-        if: always()
+        if: github.ref == 'refs/heads/main'      
         with:
           status: ${{ job.status }}
           author_name: '🔧 Build'
@@ -55,12 +63,12 @@ jobs:
 
       - name: Notify Slack - Lint
         uses: 8398a7/action-slack@v3
-        if: always()
+        if: github.ref == 'refs/heads/main'
         with:
           status: ${{ job.status }}
           author_name: '🧼 Lint'
           job_name: 🧼 Lint
-          fields: commit,took
+          fields: took
           icon_emoji: ':broom:'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -88,12 +96,12 @@ jobs:
 
       - name: Notify Slack - Test
         uses: 8398a7/action-slack@v3
-        if: always()
+        if: github.ref == 'refs/heads/main'
         with:
           status: ${{ job.status }}
           author_name: '🧪 Test'
           job_name: 🧪 Test
-          fields: commit,took
+          fields: took
           icon_emoji: ':test_tube:'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -118,22 +126,43 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  deploy:
-    name: 🚀 Deploy to Render
+  deploy-production:
+    name: 🚀 Deploy to Production
     needs: sonarcloud
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
-      - name: Trigger Render Deploy Hook
+      - name: Trigger Render Production Deploy Hook 
         run: |
           curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
-      - name: Notify Slack - Deploy
+      - name: Notify Slack - Deploy Production
         uses: 8398a7/action-slack@v3
         if: always()
         with:
           status: ${{ job.status }}
           author_name: '🚀 Deploy'
-          job_name: 🚀 Deploy
-          fields: commit,took
+          job_name: 🚀 Deploy to Production
+          fields: took
           icon_emoji: ':rocket:'
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    needs: sonarcloud
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging'
+    steps:
+      - name: Trigger Render Staging Deploy Hook
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL_STAGING }}"
+      - name: Notify Slack - Deploy Staging
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          author_name: '🚀 Deploy'
+          job_name: 🚀 Deploy to Staging
+          fields: took
+          icon_emoji: ':rocket:'
+        env:
+          SLACK_WEBHOOK_URL_STAGING: ${{ secrets.SLACK_WEBHOOK_URL_STAGING }}
