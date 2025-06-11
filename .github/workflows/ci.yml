@@ -1,6 +1,8 @@
 name: CI/CD - Node.js App
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [ main ]
 
@@ -60,7 +62,7 @@ jobs:
           status: ${{ job.status }}
           author_name: '🧼 Lint'
           job_name: 🧼 Lint
-          fields: commit,took
+          fields: took
           icon_emoji: ':broom:'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -93,7 +95,7 @@ jobs:
           status: ${{ job.status }}
           author_name: '🧪 Test'
           job_name: 🧪 Test
-          fields: commit,took
+          fields: took
           icon_emoji: ':test_tube:'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -132,8 +134,8 @@ jobs:
         with:
           status: ${{ job.status }}
           author_name: '🚀 Deploy'
-          job_name: 🚀 Deploy
-          fields: commit,took
+          job_name: 🚀 Deploy to Render
+          fields: took
           icon_emoji: ':rocket:'
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
