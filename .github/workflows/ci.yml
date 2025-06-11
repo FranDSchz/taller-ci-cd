@@ -1,5 +1,4 @@
 name: CI/CD
-
 on:
   push:
     branches:
@@ -10,6 +9,15 @@ on:
     branches:
       - main
       - staging
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Ambiente para el rollback'
+        required: true
+        type: choice
+        options:
+        - production
+        - staging
 
 jobs:
   build:
@@ -166,3 +174,57 @@ jobs:
           icon_emoji: ':rocket:'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_STAGING }}
+  manual-rollback:
+    name: ⏪ Manual Rollback
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: 'Trigger Rollback in Render'
+        run: |
+          # Seleccionar el Service ID y el webhook de Slack según el input
+          if [ "${{ github.event.inputs.environment }}" == "production" ]; then
+            SERVICE_ID="${{ secrets.RENDER_SERVICE_ID_PRODUCTION }}"
+            SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
+          else
+            SERVICE_ID="${{ secrets.RENDER_SERVICE_ID_STAGING }}"
+            SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL_STAGING }}"
+          fi
+
+          echo "Buscando el último despliegue exitoso para el servicio ${SERVICE_ID}..."
+
+          # Usamos curl y jq para buscar el commit del último deploy exitoso ("live")
+          LAST_SUCCESSFUL_COMMIT_ID=$(curl --request GET \
+            --url "https://api.render.com/v1/services/${SERVICE_ID}/deploys?limit=20" \
+            --header "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            --header 'Accept: application/json' | \
+            jq -r '.[] | select(.status == "live") | .commit.id' | head -n 1)
+
+          if [ -z "$LAST_SUCCESSFUL_COMMIT_ID" ]; then
+            echo "::error::No se pudo encontrar un despliegue exitoso anterior para hacer rollback."
+            exit 1
+          fi
+
+          echo "Último commit exitoso encontrado: ${LAST_SUCCESSFUL_COMMIT_ID}"
+          echo "Iniciando rollback..."
+
+          # Usamos curl para disparar un nuevo deploy usando el commit encontrado
+          curl --request POST \
+            --url "https://api.render.com/v1/services/${SERVICE_ID}/deploys" \
+            --header "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data "{\"commitId\": \"${LAST_SUCCESSFUL_COMMIT_ID}\"}"
+      
+      - name: Notify Slack - Rollback Started
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          author_name: '⏪ Rollback Iniciado'
+          job_name: ⏪ Manual Rollback
+          fields: author,eventName,ref
+          icon_emoji: ':rewind:'
+        env:
+          SLACK_WEBHOOK_URL: |
+            ${{ (github.event.inputs.environment == 'production' && secrets.SLACK_WEBHOOK_URL) ||
+                (github.event.inputs.environment == 'staging' && secrets.SLACK_WEBHOOK_URL_STAGING) }}
