@@ -140,6 +140,11 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+            fetch-depth: 1
+
       - name: Mover tarjeta Trello a "Done"
         if: success()
         run: |
