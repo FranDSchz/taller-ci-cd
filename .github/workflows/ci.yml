@@ -134,6 +134,17 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Notify Slack - SonarCloud Analysis
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          author_name: '📊 SonarCloud Analysis'
+          job_name: 📊 SonarCloud Analysis
+          fields: repo,message,commit,author,eventName,ref,took
+          icon_emoji: ':bar_chart:'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
   move-trello-card:
     name: 🃏 Move card to Done ✔️
     needs: sonarcloud
