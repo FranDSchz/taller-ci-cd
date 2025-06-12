@@ -20,8 +20,8 @@ on:
         - staging
 
 jobs:
-  build:
-    name: 🔧 Build
+  build-test:
+    name: 🔧 Build-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,18 +31,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm' # La clave está aquí: activa la caché.
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Notify Slack - Build
+        
+      - name: Run tests
+        run: npm test
+      - name: Notify Slack - Build y Tests
         uses: 8398a7/action-slack@v3
         if: github.ref == 'refs/heads/main' && failure()
         with:
           status: ${{ job.status }}
-          author_name: '🔧 Build'
-          job_name: 🔧 Build
+          author_name: '🔧 Build y test'
+          job_name: 🔧 Build-test
           fields: repo,message,commit,author,eventName,ref,took
           mention: 'here'
           if_mention: failure
@@ -53,6 +55,7 @@ jobs:
 
   lint:
     name: 🧼 Lint
+    needs: build-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -80,42 +83,11 @@ jobs:
           icon_emoji: ':broom:'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-  test:
-    name: 🧪 Test
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm' 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm test
-
-      - name: Notify Slack - Test
-        uses: 8398a7/action-slack@v3
-        if: github.ref == 'refs/heads/main' && failure()
-        with:
-          status: ${{ job.status }}
-          author_name: '🧪 Test'
-          job_name: 🧪 Test
-          fields: took
-          icon_emoji: ':test_tube:'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       
   sonarcloud:
     name: 📊 SonarCloud Analysis
     runs-on: ubuntu-latest
-    needs: test
+    needs: lint
     steps:
       - uses: actions/checkout@v4
         with:
