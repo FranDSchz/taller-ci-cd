@@ -38,7 +38,7 @@ jobs:
 
       - name: Notify Slack - Build
         uses: 8398a7/action-slack@v3
-        if: github.ref == 'refs/heads/main'      
+        if: github.ref == 'refs/heads/main' && failure()
         with:
           status: ${{ job.status }}
           author_name: '🔧 Build'
@@ -71,7 +71,7 @@ jobs:
 
       - name: Notify Slack - Lint
         uses: 8398a7/action-slack@v3
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && failure()
         with:
           status: ${{ job.status }}
           author_name: '🧼 Lint'
@@ -104,7 +104,7 @@ jobs:
 
       - name: Notify Slack - Test
         uses: 8398a7/action-slack@v3
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && failure()
         with:
           status: ${{ job.status }}
           author_name: '🧪 Test'
