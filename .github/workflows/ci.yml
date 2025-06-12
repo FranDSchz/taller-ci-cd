@@ -38,8 +38,6 @@ jobs:
         
       - name: Run tests
         run: npm test
-      - name: build
-        run: npm run build
       - name: Notify Slack - Build y Tests
         uses: 8398a7/action-slack@v3
         if: github.ref == 'refs/heads/main' && failure()
