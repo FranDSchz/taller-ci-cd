@@ -134,6 +134,33 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  move-trello-card:
+    name: 🃏 Move card to Done ✔️
+    needs: sonarcloud
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Mover tarjeta Trello a "Done"
+        if: success()
+        run: |
+          echo "Obteniendo ID de la tarjeta Trello desde el último commit..."
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit: $COMMIT_MSG"
+
+          TRELLO_CARD_ID=$(echo "$COMMIT_MSG" | grep -oP '(?<=\[TRELLO-)[a-zA-Z0-9]+(?=\])')
+    
+          if [ -z "$TRELLO_CARD_ID" ]; then
+          echo "No se encontró ID de tarjeta Trello en el mensaje de commit."
+          exit 0
+          fi
+
+          echo "ID de la tarjeta detectado: $TRELLO_CARD_ID"
+
+          echo "Moviendo tarjeta a lista Done..."
+          curl -s -X PUT "https://api.trello.com/1/cards/$TRELLO_CARD_ID/idList" \
+            -d "value=${{ secrets.TRELLO_DONE_LIST_ID }}" \
+            -d "key=${{ secrets.TRELLO_API_KEY }}" \
+            -d "token=${{ secrets.TRELLO_TOKEN }}"
   deploy-production:
     name: 🚀 Deploy to Production
     needs: sonarcloud
