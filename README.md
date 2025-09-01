@@ -10,7 +10,7 @@ Este proyecto es el resultado práctico de un taller enfocado en los principios 
 
 El siguiente diagrama ilustra el flujo de trabajo automatizado que se activa con cada `push` a la rama `main`:
 
-![Diagrama del Pipeline CI/CD](https://imgur.com/a/05Ynh2Z)
+![Diagrama del Pipeline CI/CD](https://i.imgur.com/rbKCicl.png)
 
 ---
 
